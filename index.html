@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Holeni Pharmacy - Patient Records</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#f3eefb;padding:20px}
+.container{max-width:1000px;margin:auto}
+header{background:#6a1b9a;color:white;padding:25px;border-radius:15px;text-align:center;margin-bottom:20px}
+header h1{font-size:28px}
+header p{opacity:.9;margin-top:5px}
+.grid{display:grid;grid-template-columns:1fr 1.2fr;gap:20px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+.card{background:white;padding:20px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,.08)}
+.card h2{color:#6a1b9a;margin-bottom:15px;font-size:19px}
+label{display:block;margin:12px 0 5px;color:#333;font-weight:bold;font-size:14px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:15px}
+textarea{resize:vertical;min-height:60px}
+button{width:100%;padding:13px;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:15px}
+.btn-add{background:#6a1b9a;color:white}
+.btn-clear{background:#e0e0e0;color:#333}
+.search{margin-bottom:12px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #eee}
+th{color:#6a1b9a}
+.remove{color:red;cursor:pointer;font-weight:bold}
+.badge{background:#e8f5e9;color:#2e7d32;padding:4px 10px;border-radius:20px;font-size:12px}
+.count{background:#6a1b9a;color:white;padding:4px 12px;border-radius:20px;font-size:13px}
+.footer{text-align:center;margin-top:20px;color:#888;font-size:13px}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>💊 Holeni Pharmacy</h1>
+<p>Patient Records System | Nurse: Letshela</p>
+<span class="badge">● System Online</span>
+</header>
+<div class="grid">
+<div class="card">
+<h2>➕ Add New Patient</h2>
+<label>Full Name</label>
+<input type="text" id="pName" placeholder="e.g. Thabo Mokoena">
+<label>Phone Number</label>
+<input type="text" id="pPhone" placeholder="e.g. 082 123 4567">
+<label>Age</label>
+<input type="number" id="pAge" placeholder="e.g. 34">
+<label>Illness / Condition</label>
+<select id="pIllness">
+<option value="">-- Select --</option>
+<option>Flu / Cold</option>
+<option>Headache</option>
+<option>High Blood Pressure</option>
+<option>Diabetes</option>
+<option>Allergy</option>
+<option>Stomach Pain</option>
+<option>Other</option>
+</select>
+<label>Medicine Given</label>
+<input type="text" id="pMedicine" placeholder="e.g. Panado x2">
+<label>Notes</label>
+<textarea id="pNotes" placeholder="Any notes..."></textarea>
+<button class="btn-add" onclick="addPatient()">Save Patient Record</button>
+<button class="btn-clear" onclick="clearAll()">Clear All Records</button>
+</div>
+<div class="card">
+<h2>📋 Patient List <span class="count" id="count">0 Patients</span></h2>
+<input type="text" id="search" class="search" placeholder="🔍 Search by name, illness or medicine..." onkeyup="render()">
+<table>
+<thead><tr><th>Name</th><th>Age</th><th>Illness</th><th>Medicine</th><th></th></tr></thead>
+<tbody id="list"><tr><td colspan="5" style="text-align:center;color:#999;padding:20px">No patients yet. Add one.</td></tr></tbody>
+</table>
+<p style="font-size:12px;color:#888;margin-top:12px">Records are saved in this browser. Date: <span id="date"></span></p>
+</div>
+</div>
+<p class="footer">Holeni Pharmacy - Centurion | Tel: 082 431 1945 | Patient records are confidential</p>
+</div>
+<script>
+let patients = JSON.parse(localStorage.getItem('holeni_patients')||'[]');
+document.getElementById('date').textContent=new Date().toLocaleDateString('en-ZA');
+function addPatient(){
+  let name=document.getElementById('pName').value.trim();
+  let phone=document.getElementById('pPhone').value.trim();
+  let age=document.getElementById('pAge').value;
+  let illness=document.getElementById('pIllness').value;
+  let medicine=document.getElementById('pMedicine').value.trim();
+  let notes=document.getElementById('pNotes').value.trim();
+  if(!name||!illness){alert('Please enter Name and Illness');return;}
+  patients.unshift({name,phone,age,illness,medicine,notes,date:new Date().toLocaleDateString('en-ZA')});
+  localStorage.setItem('holeni_patients',JSON.stringify(patients));
+  document.getElementById('pName').value='';
+  document.getElementById('pPhone').value='';
+  document.getElementById('pAge').value='';
+  document.getElementById('pIllness').value='';
+  document.getElementById('pMedicine').value='';
+  document.getElementById('pNotes').value='';
+  render();
+}
+function removePatient(i){
+  let filtered = getFiltered();
+  let realIndex = patients.indexOf(filtered[i]);
+  patients.splice(realIndex,1);
+  localStorage.setItem('holeni_patients',JSON.stringify(patients));
+  render();
+}
+function clearAll(){
+  if(confirm('Delete ALL patient records?')){patients=[];localStorage.removeItem('holeni_patients');render();}
+}
+function getFiltered(){
+  let q=document.getElementById('search').value.toLowerCase();
+  if(!q) return patients;
+  return patients.filter(p=>(p.name+' '+p.illness+' '+p.medicine).toLowerCase().includes(q));
+}
+function render(){
+  let list=document.getElementById('list');
+  let filtered=getFiltered();
+  document.getElementById('count').textContent=patients.length+' Patients';
+  if(filtered.length===0){list.innerHTML='<tr><td colspan="5" style="text-align:center;color:#999;padding:20px">No patients found.</td></tr>';return;}
+  list.innerHTML=filtered.map((p,i)=>`<tr><td><b>${p.name}</b><br><small style="color:#888">${p.phone||''} • ${p.date}</small></td><td>${p.age||'-'}</td><td>${p.illness}</td><td>${p.medicine||'-'}<br><small style="color:#888">${p.notes||''}</small></td><td class="remove" onclick="removePatient(${i})">✕</td></tr>`).join('');
+}
+render();
+</script>
+</body>
+</html>
